@@ -57,7 +57,7 @@
     card.classList.remove('landed', 'dropped');
     void card.offsetWidth;
     card.classList.add(nowDone ? 'landed' : 'dropped');
-    if (nowDone) { confetti(card); sound('done'); } else { sound('paper'); }
+    if (nowDone) { confetti(card._node || card); sound('done'); } else { sound('paper'); }
     var s = document.getElementById('demoStatus');
     if (s) s.textContent = '"' + card.querySelector('.ct').textContent + '" movido para ' + to.querySelector('span').textContent + '.';
   }
@@ -108,4 +108,139 @@
     card.focus();
     placed(card, from, to);
   });
+
+  /* criar card */
+  var MAX_CARDS = 14;
+  var form = document.getElementById('demoForm'), input = document.getElementById('demoTitle');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var title = input.value.trim();
+    if (!title) { input.focus(); return; }
+    if (board.querySelectorAll('.cd').length >= MAX_CARDS) { hint('O quadro de demonstração está cheio. Mova ou recarregue a página.'); return; }
+    var card = document.createElement('div'), t = document.createElement('div');
+    card.className = 'cd born'; card.tabIndex = 0;
+    t.className = 'ct'; t.textContent = title;
+    card.appendChild(t);
+    cols[0].appendChild(card);
+    input.value = '';
+    sound('paper');
+    if (mode === 'map') renderMap();
+    hint(HINTS[mode]);
+  });
+
+  /* trocar entre quadro e mapa */
+  var HINTS = { board: 'Experimente: arraste um card até Feito.', map: 'Arraste os itens. Solte um card sobre uma coluna para movê-lo.' };
+  var mode = 'board', map = document.getElementById('demoMap'), edges = document.getElementById('demoEdges'), nodesBox = document.getElementById('demoNodes');
+  var seg = document.getElementById('demoSeg'), root = { label: 'Meu quadro' };
+  function hint(t) { document.getElementById('demoHint').textContent = t; }
+  seg.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-v]');
+    if (!b || b.getAttribute('data-v') === mode) return;
+    mode = b.getAttribute('data-v');
+    Array.prototype.forEach.call(seg.children, function (x) { var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+    board.hidden = mode !== 'board'; map.hidden = mode !== 'map';
+    hint(HINTS[mode]);
+    if (mode === 'map') renderMap(); else clearMap();
+  });
+  function clearMap() { board.querySelectorAll('.cd').forEach(function (c) { c._node = null; }); nodesBox.textContent = ''; }
+
+  var items = [];
+  function makeNode(cls, text, hue, x, y, ref) {
+    var n = document.createElement('div');
+    n.className = 'mn ' + cls; n.textContent = text; n.tabIndex = 0;
+    if (hue) n.style.setProperty('--a', hue);
+    nodesBox.appendChild(n);
+    var it = { el: n, x: x, y: y, ref: ref, parent: null };
+    n._it = it; items.push(it); return it;
+  }
+  function renderMap() {
+    clearMap(); items = [];
+    var cards = 0; cols.forEach(function (c) { cards += Math.max(1, c.querySelectorAll('.cd').length); });
+    var w = map.clientWidth, h = Math.max(260, cards * 44 + 24); map.style.height = h + 'px';
+    var nodeW = Math.min(122, (w - 30) / 3), gap = (w - nodeW * 3 - 16) / 2, y = 12;
+    var rootIt = makeNode('r', root.label, null, root.x != null ? root.x : 8, root.y != null ? root.y : h / 2 - 18, root); rootIt.w = nodeW;
+    cols.forEach(function (col) {
+      var cs = Array.prototype.slice.call(col.querySelectorAll('.cd')), blockH = Math.max(1, cs.length) * 44;
+      var name = col.querySelector('span').textContent, hue = col.style.getPropertyValue('--a');
+      var ci = makeNode('c', name, hue, col._mx != null ? col._mx : 8 + nodeW + gap, col._my != null ? col._my : y + blockH / 2 - 18, col);
+      ci.parent = rootIt; ci.col = col;
+      cs.forEach(function (card, i) {
+        var ti = card.querySelector('.ct').textContent;
+        var it = makeNode('k' + (card.classList.contains('done') ? ' done' : ''), ti, hue, card._mx != null ? card._mx : 8 + (nodeW + gap) * 2, card._my != null ? card._my : y + i * 44, card);
+        it.parent = ci; it.card = card; card._node = it.el;
+      });
+      y += blockH;
+    });
+    items.forEach(function (it) { it.el.style.width = nodeW + 'px'; position(it); });
+    drawEdges();
+  }
+  function position(it) { it.el.style.left = it.x + 'px'; it.el.style.top = it.y + 'px'; }
+  function drawEdges() {
+    var d = {};
+    edges.textContent = '';
+    items.forEach(function (it) {
+      if (!it.parent) return;
+      var a = it.parent, ax = a.x + a.el.offsetWidth, ay = a.y + a.el.offsetHeight / 2, bx = it.x, by = it.y + it.el.offsetHeight / 2, mx = (ax + bx) / 2;
+      var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', 'M' + ax + ' ' + ay + ' C' + mx + ' ' + ay + ' ' + mx + ' ' + by + ' ' + bx + ' ' + by);
+      p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', it.el.style.getPropertyValue('--a') || 'rgba(255,255,255,.3)');
+      p.setAttribute('stroke-opacity', '.55'); p.setAttribute('stroke-width', '1.5');
+      edges.appendChild(p);
+    });
+  }
+  function save(it) {
+    var r = it.ref; if (r === root) { root.x = it.x; root.y = it.y; } else { r._mx = it.x; r._my = it.y; }
+  }
+  function columnUnder(it) {
+    var r = it.el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, hit = null;
+    items.forEach(function (o) {
+      if (!o.col) return;
+      var b = o.el.getBoundingClientRect();
+      if (cx >= b.left - 8 && cx <= b.right + 8 && cy >= b.top - 8 && cy <= b.bottom + 8) hit = o.col;
+    });
+    return hit;
+  }
+  var md = null;
+  map.addEventListener('pointerdown', function (e) {
+    var n = e.target.closest('.mn'); if (!n || e.button > 0) return;
+    e.preventDefault(); n.setPointerCapture(e.pointerId); n.focus({ preventScroll: true }); n.classList.add('dragging');
+    md = { it: n._it, id: e.pointerId, dx: e.clientX - n._it.x, dy: e.clientY - n._it.y };
+  });
+  map.addEventListener('pointermove', function (e) {
+    if (!md || e.pointerId !== md.id) return;
+    var it = md.it;
+    it.x = Math.max(0, Math.min(map.clientWidth - it.el.offsetWidth, e.clientX - md.dx));
+    it.y = Math.max(0, Math.min(map.clientHeight - it.el.offsetHeight, e.clientY - md.dy));
+    position(it); drawEdges();
+  });
+  function mapEnd(e) {
+    if (!md || e.pointerId !== md.id) return;
+    var it = md.it; md = null; it.el.classList.remove('dragging');
+    save(it);
+    if (it.card) {
+      var to = columnUnder(it), from = it.card.parentNode;
+      if (to && to !== from) {
+        to.appendChild(it.card); it.card._mx = it.card._my = null;
+        moveInMap(it.card, from, to);
+      }
+    }
+  }
+  function moveInMap(card, from, to) {
+    renderMap();
+    placed(card, from, to);
+    var n = card._node;
+    if (n) { n.classList.toggle('done', card.classList.contains('done')); n.classList.add('landed'); n.focus({ preventScroll: true }); }
+  }
+  map.addEventListener('pointerup', mapEnd);
+  map.addEventListener('pointercancel', mapEnd);
+  map.addEventListener('keydown', function (e) {
+    var n = e.target.closest('.mn'); if (!n || !n._it.card || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+    e.preventDefault();
+    var card = n._it.card, from = card.parentNode, to = cols[cols.indexOf(from) + (e.key === 'ArrowRight' ? 1 : -1)];
+    if (!to) return;
+    to.appendChild(card); card._mx = card._my = null;
+    moveInMap(card, from, to);
+  });
+  window.addEventListener('resize', function () { if (mode === 'map') renderMap(); });
 })();
