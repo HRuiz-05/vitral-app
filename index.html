@@ -11,7 +11,18 @@
 :root{--ink:#f0f0f2;--i2:#b9bac1;--i3:#8b8c95;--ln:rgba(255,255,255,.085);color-scheme:dark}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:radial-gradient(900px 480px at 10% -80px,rgba(124,108,255,.2),transparent 70%),radial-gradient(680px 420px at 96% 260px,rgba(0,194,168,.07),transparent 70%),#111216;color:var(--ink);font:15px/1.55 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.bg i{position:absolute;width:52vmax;height:52vmax;border-radius:50%;filter:blur(70px);will-change:transform}
+.bg i:nth-child(1){left:-14vmax;top:-22vmax;background:rgba(139,124,255,.2);animation:d1 34s ease-in-out infinite alternate}
+.bg i:nth-child(2){right:-18vmax;top:4vmax;background:rgba(0,194,168,.09);animation:d2 42s ease-in-out infinite alternate}
+.bg i:nth-child(3){left:18vmax;bottom:-30vmax;background:rgba(255,107,139,.075);animation:d3 38s ease-in-out infinite alternate}
+.bg i:nth-child(4){right:6vmax;bottom:-34vmax;background:rgba(255,181,71,.06);animation:d4 46s ease-in-out infinite alternate}
+@keyframes d1{to{transform:translate(20vmax,12vmax) scale(1.12)}}
+@keyframes d2{to{transform:translate(-22vmax,14vmax) scale(.92)}}
+@keyframes d3{to{transform:translate(16vmax,-14vmax) scale(1.1)}}
+@keyframes d4{to{transform:translate(-20vmax,-10vmax) scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.bg i{animation:none}}
+body{margin:0;background:#111216;color:var(--ink);font:15px/1.55 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:inherit}
 .wrap{max-width:1080px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
 nav{border-bottom:1px solid var(--ln)}
@@ -77,6 +88,7 @@ footer .wrap{padding-block:18px}
 </style>
 </head>
 <body>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <nav><div class="wrap"><a class="pb" href="#vitral"><img src="assets/vitral.png" alt="">Vitral</a><a class="pb" href="#sinete"><img src="assets/sinete.png" alt="">Sinete</a><span class="nsp"></span><a href="#sobre">Sobre</a></div></nav>
 <main class="wrap">
   <section class="hero" id="vitral">
