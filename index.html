@@ -39,6 +39,9 @@ h1{margin:16px 0 0;font-size:clamp(34px,5vw,50px);line-height:1.06;font-weight:6
 .lead{margin:16px 0 0;color:var(--i2);font-size:17px;max-width:42ch}
 .btn{display:inline-block;margin-top:24px;padding:12px 20px;border-radius:10px;background:#ecebe6;color:#15161a;font-weight:650;text-decoration:none;transition:transform .2s,background .2s}
 .btn:hover{background:#fff;transform:translateY(-1px)}
+.dlrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:24px}
+.dlrow .btn{margin-top:0}
+.dlrow small{color:var(--i3);font-size:12px;line-height:1.4}
 .meta{margin:11px 0 0;color:var(--i3);font-size:13px}
 .app{border:1px solid var(--ln);border-radius:16px;background:rgba(255,255,255,.03);padding:11px;box-shadow:0 34px 70px -38px #000}
 .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;min-height:250px}
@@ -96,7 +99,7 @@ footer .wrap{padding-block:18px}
       <div class="eb"><img src="assets/vitral.png" alt="">Vitral para Windows</div>
       <h1>Seus cards e anotações, no seu computador.</h1>
       <p class="lead">Organize o trabalho em quadros, ligue uma nota a outra e estude com trilhas em mapa. Sem criar conta.</p>
-      <a class="btn" href="downloads/Vitral.exe" download>Baixar para Windows</a>
+      <div class="dlrow"><a class="btn" href="downloads/Vitral.exe" download>Baixar para Windows</a><small>Em desenvolvimento para Android.<br>Em breve na Microsoft Store.</small></div>
       <p class="meta">Versão 1.0 · Windows 10 e 11, 64 bits · Grátis · 73 MB</p>
     </div>
     <div class="app">
